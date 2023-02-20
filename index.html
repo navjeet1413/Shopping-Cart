@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shopping Cart</title>
+  <style>
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: lightgray;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shopping Cart</h1>
+  <table id="cart">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="cart-items"></tbody>
+  </table>
+  <br />
+  <form>
+    <label for="name">Name:</label> &nbsp;&nbsp;&nbsp;
+    <input type="text" id="name" name="name">
+    <br />
+    <br />
+    <label for="price">Price:</label>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <input type="number" id="price" name="price">
+    <br />
+    <br />
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" name="quantity">
+    <br />
+    <br />
+    <button type="button" id="add-item">Add Item</button> &nbsp;
+    <button type="button" id="checkout">Checkout</button>
+  </form>
+
+  <script>
+    const addItemButton = document.querySelector("#add-item");
+    const checkoutButton = document.querySelector("#checkout");
+    const cartItems = document.querySelector("#cart-items");
+
+    function renderCartItems(items) {
+      cartItems.innerHTML = "";
+      items.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.price}</td>
+          <td>${item.quantity}</td>
+          <td>
+            <button data-id="${item._id}">Remove</button>
+          </td>
+        `;
+        cartItems.appendChild(tr);
+      });
+    }
+
+    function fetchCartItems() {
+      fetch("http://localhost:3000/cart")
+        .then(res => res.json())
+        .then(renderCartItems)
+        .catch(error => console.error(error));
+     }
+
+     addItemButton.addEventListener("click", event => {
+     const name = document.querySelector("#name").value;
+     const price = document.querySelector("#price").value;
+     const quantity = document.querySelector("#quantity").value;
+     const item = { name, price, quantity };
+     fetch("http://localhost:3000/cart", {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json"
+       },
+       body: JSON.stringify(item)
+     })
+       .then(res => res.json())
+       .then(fetchCartItems)
+       .catch(error => console.error(error));
+   });
+
+   checkoutButton.addEventListener("click", event => {
+     fetch("http://localhost:3000/cart/checkout", {
+       method: "POST"
+     })
+       .then(res => res.json())
+       .then(console.log("checkout"))
+       .then(fetchCartItems)
+       .catch(error => console.error(error));
+   });
+
+   cartItems.addEventListener("click", event => {
+     if (event.target.tagName === "BUTTON") {
+       fetch(`http://localhost:3000/cart/${event.target.dataset.id}`, {
+         method: "DELETE"
+       })
+         .then(res => res.json())
+         .then(fetchCartItems)
+         .catch(error => console.error(error));
+     }
+   });
+
+   fetchCartItems();
+ </script>
+</body>
+</html>
